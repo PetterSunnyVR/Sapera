@@ -109,6 +109,69 @@ int main()
 		Buffers = new SapBufferWithTrash(2, AcqDevice);
 		View = new SapView(Buffers, SapHwndAutomatic);
 		Xfer = new SapAcqDeviceToBuf(AcqDevice, Buffers, AcqCallback, View);
+
+		// Create acquisition object
+		if (AcqDevice && !*AcqDevice && !AcqDevice->Create())
+			goto FreeHandles;
+
+	}
+
+	// Create buffer object
+	if (Buffers && !*Buffers && !Buffers->Create())
+		goto FreeHandles;
+
+	// Create transfer object
+	if (Xfer && !*Xfer && !Xfer->Create())
+		goto FreeHandles;
+
+	// Create view object
+	if (View && !*View && !View->Create())
+		goto FreeHandles;
+
+
+	// Start continous grab
+	Xfer->Grab();
+
+
+	printf("Press any key to stop grab\n");
+	CorGetch();
+
+	// Stop grab
+	Xfer->Freeze();
+	if (!Xfer->Wait(5000))
+		printf("Grab could not stop properly.\n");
+
+FreeHandles:
+	printf("Press any key to terminate\n");
+	CorGetch();
+
+	//unregister the acquisition callback
+	if (Acq)
+		Acq->UnregisterCallback();
+
+	// Destroy view object
+	if (View && *View && !View->Destroy()) return FALSE;
+
+	// Destroy transfer object
+	if (Xfer && *Xfer && !Xfer->Destroy()) return FALSE;
+
+	// Destroy buffer object
+	if (Buffers && *Buffers && !Buffers->Destroy()) return FALSE;
+
+	// Destroy acquisition object
+	if (Acq && *Acq && !Acq->Destroy()) return FALSE;
+
+	// Destroy acquisition object
+	if (AcqDevice && *AcqDevice && !AcqDevice->Destroy()) return FALSE;
+
+	// Delete all objects
+	if (View)		delete View;
+	if (Xfer)		delete Xfer;
+	if (Buffers)	delete Buffers;
+	if (Acq)		delete Acq;
+	if (AcqDevice)	delete AcqDevice;
+
+		/*View->Create();
 		Xfer->Grab();
 		Xfer->Wait(5000);
 		Xfer->Freeze();
@@ -116,9 +179,8 @@ int main()
 		if (Xfer) delete Xfer;
 		if (Buffers) delete Buffers;
 		if (Acq) delete Acq;
-		if (AcqDevice) delete AcqDevice;
+		if (AcqDevice) delete AcqDevice;*/
 
-	}
 	SapManager::Close();
     return 0;
 }
